@@ -1,3 +1,11 @@
+ink:
+  component-shape:
+    description: Write Ink components as plain typed functions with a named `XxxProps` interface
+  keyboard-handling:
+    description: useInput patterns; every interactive screen must handle Ctrl+C and `q` as exit
+  layout:
+    description: Box for layout, Text for content; Ink layout cheat sheet
+
 typescript:
   import-extensions:
     description: Use `.js` on local imports (even for `.ts`/`.tsx` sources), `node:` prefix for built-ins
