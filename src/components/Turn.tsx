@@ -84,8 +84,10 @@ export const Turn: React.FC<TurnProps> = ({
 					{block, charsRevealed: 0, toolStatus: 'running'},
 				]);
 
-				if (block.type === 'text') {
-					await streamText(block.text, revealed => {
+				if (block.type === 'text' || block.type === 'thinking') {
+					const source =
+						block.type === 'text' ? block.text : block.thinking;
+					await streamText(source, revealed => {
 						setBlocks(prev =>
 							prev.map((b, idx) =>
 								idx === i ? {...b, charsRevealed: revealed} : b,
@@ -157,7 +159,20 @@ const RenderedBlock: React.FC<RenderedBlockProps> = ({state, turn}) => {
 		return <ToolPanel toolUse={block} result={result} status={toolStatus} />;
 	}
 	if (block.type === 'thinking') {
-		return <Text color="gray">⏺ Thinking…</Text>;
+		return (
+			<Box flexDirection="column">
+				<Text color="gray" dimColor>
+					✻ Thinking…
+				</Text>
+				{block.thinking.length > 0 && (
+					<Box paddingLeft={2}>
+						<Text color="gray" dimColor>
+							{block.thinking.slice(0, charsRevealed)}
+						</Text>
+					</Box>
+				)}
+			</Box>
+		);
 	}
 	return null;
 };
