@@ -1,3 +1,4 @@
+import {parsePrompt} from './prompt.js';
 import type {
 	AssistantEvent,
 	RawEvent,
@@ -25,7 +26,7 @@ export function groupIntoTurns(events: RawEvent[]): Turn[] {
 			if (typeof content === 'string') {
 				current = {
 					index: turns.length,
-					userPrompt: content,
+					prompt: parsePrompt(content),
 					assistantBlocks: [],
 					toolResults: new Map(),
 				};

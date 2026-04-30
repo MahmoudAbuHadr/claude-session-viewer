@@ -1,3 +1,6 @@
+export type {RenderedPrompt} from './prompt.js';
+import type {RenderedPrompt} from './prompt.js';
+
 export interface BaseEvent {
 	uuid: string;
 	parentUuid: string | null;
@@ -73,7 +76,7 @@ export type RawEvent = UserEvent | AssistantEvent | OtherEvent;
 
 export interface Turn {
 	index: number;
-	userPrompt: string;
+	prompt: RenderedPrompt;
 	assistantBlocks: AssistantBlock[];
 	toolResults: Map<string, ToolResultBlock>;
 }
