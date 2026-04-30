@@ -24,15 +24,45 @@ function truncate(value: string, max: number): string {
 	return value.length > max ? value.slice(0, max - 1) + '…' : value;
 }
 
-function summarizeArgs(input: Record<string, unknown>): string {
+interface AskQuestion {
+	question?: string;
+	header?: string;
+	multiSelect?: boolean;
+	options?: Array<{label?: string; description?: string}>;
+}
+
+function isAskQuestionArray(value: unknown): value is AskQuestion[] {
+	return (
+		Array.isArray(value) &&
+		value.every(q => typeof q === 'object' && q !== null)
+	);
+}
+
+export function summarizeArgs(
+	name: string,
+	input: Record<string, unknown>,
+): string {
+	if (name === 'AskUserQuestion' && isAskQuestionArray(input.questions)) {
+		const headers = input.questions
+			.map(q => q.header ?? q.question ?? '')
+			.filter(Boolean)
+			.map(h => truncate(h, 30));
+		if (headers.length > 0) return headers.join(', ');
+	}
 	for (const key of PREFERRED_ARG_KEYS) {
 		const value = input[key];
 		if (typeof value === 'string') return truncate(value, 60);
 	}
-	const keys = Object.keys(input);
-	if (keys.length === 0) return '';
-	const firstKey = keys[0]!;
-	return `${firstKey}: ${truncate(String(input[firstKey]), 50)}`;
+	for (const [key, value] of Object.entries(input)) {
+		if (
+			typeof value === 'string' ||
+			typeof value === 'number' ||
+			typeof value === 'boolean'
+		) {
+			return `${key}: ${truncate(String(value), 50)}`;
+		}
+	}
+	return '';
 }
 
 function flattenResult(content: ToolResultContent): string {
@@ -51,12 +81,20 @@ export const ToolPanel: React.FC<ToolPanelProps> = ({
 	result,
 	status,
 }) => {
-	const header = `⏺ ${toolUse.name}(${summarizeArgs(toolUse.input)})`;
+	const header = `⏺ ${toolUse.name}(${summarizeArgs(toolUse.name, toolUse.input)})`;
 	const isError = result?.is_error === true;
+	const isAskUserQuestion =
+		toolUse.name === 'AskUserQuestion' &&
+		isAskQuestionArray(toolUse.input.questions);
 
 	return (
 		<Box flexDirection="column" borderStyle="round" paddingX={1}>
 			<Text color="cyan">{header}</Text>
+			{isAskUserQuestion && (
+				<AskUserQuestionBody
+					questions={toolUse.input.questions as AskQuestion[]}
+				/>
+			)}
 			{status === 'running' && (
 				<Box>
 					<Text color="gray">
@@ -70,6 +108,32 @@ export const ToolPanel: React.FC<ToolPanelProps> = ({
 					isError={isError}
 				/>
 			)}
+		</Box>
+	);
+};
+
+interface AskUserQuestionBodyProps {
+	questions: AskQuestion[];
+}
+
+const AskUserQuestionBody: React.FC<AskUserQuestionBodyProps> = ({
+	questions,
+}) => {
+	return (
+		<Box flexDirection="column" marginTop={1}>
+			{questions.map((q, qi) => (
+				<Box key={qi} flexDirection="column" marginBottom={qi < questions.length - 1 ? 1 : 0}>
+					<Text bold>{q.question ?? q.header ?? ''}</Text>
+					{q.options?.map((opt, oi) => (
+						<Box key={oi} flexDirection="column">
+							<Text color="green">{`  • ${opt.label ?? ''}`}</Text>
+							{opt.description && (
+								<Text color="gray">{`      ${opt.description}`}</Text>
+							)}
+						</Box>
+					))}
+				</Box>
+			))}
 		</Box>
 	);
 };
