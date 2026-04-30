@@ -1,0 +1,9 @@
+{"uuid":"sys1","parentUuid":null,"isSidechain":false,"timestamp":"2026-04-30T10:00:00Z","sessionId":"s1","cwd":"/tmp/proj","type":"system","subtype":"informational","content":"banner"}
+{"uuid":"u1","parentUuid":null,"isSidechain":false,"timestamp":"2026-04-30T10:00:01Z","sessionId":"s1","cwd":"/tmp/proj","type":"user","message":{"role":"user","content":"read foo.txt"}}
+{"uuid":"a1","parentUuid":"u1","isSidechain":false,"timestamp":"2026-04-30T10:00:02Z","sessionId":"s1","cwd":"/tmp/proj","type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tool_1","name":"Read","input":{"file_path":"foo.txt"}}]}}
+{"uuid":"u2","parentUuid":"a1","isSidechain":false,"timestamp":"2026-04-30T10:00:03Z","sessionId":"s1","cwd":"/tmp/proj","type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"tool_1","content":"file contents"}]}}
+{"uuid":"att1","parentUuid":"u2","isSidechain":false,"timestamp":"2026-04-30T10:00:04Z","sessionId":"s1","cwd":"/tmp/proj","type":"attachment","attachment":{"type":"hook"}}
+{"uuid":"a2","parentUuid":"u2","isSidechain":false,"timestamp":"2026-04-30T10:00:05Z","sessionId":"s1","cwd":"/tmp/proj","type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"contents are X"}]}}
+{"uuid":"side1","parentUuid":"a2","isSidechain":true,"timestamp":"2026-04-30T10:00:06Z","sessionId":"s1","cwd":"/tmp/proj","type":"user","message":{"role":"user","content":"sidechain noise"}}
+{"uuid":"u3","parentUuid":"a2","isSidechain":false,"timestamp":"2026-04-30T10:00:07Z","sessionId":"s1","cwd":"/tmp/proj","type":"user","message":{"role":"user","content":"thanks"}}
+{"uuid":"a3","parentUuid":"u3","isSidechain":false,"timestamp":"2026-04-30T10:00:08Z","sessionId":"s1","cwd":"/tmp/proj","type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"you're welcome"}]}}

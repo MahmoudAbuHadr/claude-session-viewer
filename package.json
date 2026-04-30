@@ -1,0 +1,35 @@
+{
+  "name": "claude-replay",
+  "version": "0.1.0",
+  "description": "Replay finished Claude Code sessions in the terminal as if they were happening live.",
+  "type": "module",
+  "bin": {
+    "claude-replay": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.tsx",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "ink": "^5.0.1",
+    "ink-spinner": "^5.0.0",
+    "meow": "^13.2.0",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/react": "^18.3.3",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4",
+    "vitest": "^1.6.0"
+  },
+  "license": "MIT"
+}

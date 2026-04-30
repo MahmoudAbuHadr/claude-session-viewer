@@ -63,9 +63,9 @@ Subagent rendering is **out of scope for the MVP** and lives in Phase 2; the MVP
 Each event type maps to a specific Claude Code visual:
 
 - **User prompt** — Auto-typed into the bottom prompt box character-by-character, then "submitted" (box clears, message appears above as `> the prompt text` in dim color). This is the part that sells the illusion: the audience sees a prompt being typed but the presenter never pressed any keys.
-- **Assistant `text` block** — Streamed top-down in the main pane. In streaming mode, ~150 chars/sec with small jitter. In instant mode, the full block appears in one frame.
+- **Assistant `text` block** — Streamed top-down in the main pane. In streaming mode, characters appear in chunks of 3 every ~10ms (~300 chars/sec) with small jitter. The chunking matters: per-character React state updates were a noticeable bottleneck on long blocks (~900 chars), and 1-char-per-tick streaming felt deceptively slow on a TTY. In instant mode, the full block appears in one frame.
 - **Assistant `thinking` block** — Rendered inside a collapsed `⏺ Thinking…` line in dim style. Body is not shown.
-- **Assistant `tool_use` block** — A bordered tool-call panel: `⏺ ToolName(arg-summary)` header, spinner while "running", then the result inline (truncated to 30 lines with a `… +M lines` footer, like the real TUI). The "running" delay is faked: 200–600ms in streaming mode, ~0 in instant.
+- **Assistant `tool_use` block** — A bordered tool-call panel: `⏺ ToolName(arg-summary)` header, spinner while "running", then the result inline (truncated to 30 lines with a `… +M lines` footer, like the real TUI). The "running" delay is faked: 150–400ms in streaming mode, ~0 in instant.
 - **Tool result (`user` content with `tool_result`)** — Does not render as its own event; it fills in below the matching `tool_use` panel.
 - **Subagent `Task`** — MVP: collapsed panel showing the parent transcript's `tool_result` for the call. Phase 2: tick through the subagent's own JSONL.
 
@@ -91,6 +91,7 @@ Each event type maps to a specific Claude Code visual:
 |---|---|
 | `Enter` | (idle) play next turn / (done) quit |
 | `f` | toggle stream ↔ instant playback speed |
+| `n` | (typing/playing) skip to end of current turn — renders the rest of this turn instantly without changing the global speed mode |
 | `q` / `Ctrl-C` | quit |
 
 **Phase 2 keybindings:**
@@ -98,9 +99,21 @@ Each event type maps to a specific Claude Code visual:
 | Key | Action |
 |---|---|
 | `Space` | (playing) pause-resume |
-| `n` | skip to end of current turn (renders rest instantly) |
 | `b` | jump back one turn |
 | `g` | go-to-turn prompt (`> 7`) |
+
+**Status-line hint (visible at the bottom under the prompt box):** the hint must be phase-aware so the presenter can distinguish "still streaming, just be patient" from "ready, press Enter for next turn". MVP wording:
+
+| Phase | Hint |
+|---|---|
+| idle (before first turn) | `↵ play turn 1/N   f → instant   q quit` |
+| idle (mid-session) | `↵ next turn (i+1/N)   f → instant   q quit` |
+| idle (last turn finished) | `✓ end of session   ↵ quit   f → instant` |
+| typing | `▸ typing turn i/N   f → instant   n skip` |
+| playing | `▸ playing turn i/N   f → instant   n skip` |
+| done | `✓ done   ↵ quit` |
+
+Without this, a slow-streaming turn looks identical to an idle one and the presenter can't tell whether to wait or press Enter.
 
 **Why a back/jump-to feature on a "just press Enter" tool:** during demos people ask "wait, can you show that bit again?" Without `b`/`g` you would have to restart the whole session. These are escape hatches, not the main flow — Phase 2 only.
 

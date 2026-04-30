@@ -1,0 +1,2 @@
+{"uuid":"u1","parentUuid":null,"isSidechain":false,"timestamp":"2026-04-30T10:00:00Z","sessionId":"s1","cwd":"/tmp/proj","type":"user","message":{"role":"user","content":"hello"}}
+{"uuid":"a1","parentUuid":"u1","isSidechain":false,"timestamp":"2026-04-30T10:00:01Z","sessionId":"s1","cwd":"/tmp/proj","type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"hi there"}]}}

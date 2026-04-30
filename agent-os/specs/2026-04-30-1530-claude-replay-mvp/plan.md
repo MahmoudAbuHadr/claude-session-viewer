@@ -191,13 +191,14 @@ type ParsedSession = { sessionId: string; cwd: string; turns: Turn[] }
 
 **Location:** `src/components/Turn.tsx`
 
-**Signature:** `<Turn turn={Turn} mode={'stream' | 'instant'} onComplete={() => void} />`
+**Signature:** `<Turn turn={Turn} mode={'stream' | 'instant'} forceInstant?={boolean} onComplete={() => void} />`
 
 **Behavior:**
-- On mount, kicks off async playback: renders the user prompt (typewriter at ~80ch/s in `stream`, instant in `instant`), then walks `turn.assistantBlocks` in order.
-- `text` blocks: streamed character-by-character at ~150ch/s (with small jitter) in `stream`; instant in `instant`.
-- `tool_use` blocks: renders `<ToolPanel status='running'>` for 200–600ms (random), then transitions to `status='done'` with the matching entry from `turn.toolResults`. In `instant` mode, the running phase is skipped.
+- On mount, kicks off async playback. The user prompt is NOT streamed here (App handles that); the `> prompt` line renders instantly as a header above the assistant blocks. Then walks `turn.assistantBlocks` in order.
+- `text` blocks: streamed in chunks of 3 chars every ~10ms (~300 ch/s, with small jitter) in `stream`; instant in `instant`. Chunking matters — per-char `setState` was a measurable bottleneck on long blocks.
+- `tool_use` blocks: renders `<ToolPanel status='running'>` for 150–400ms (random), then transitions to `status='done'` with the matching entry from `turn.toolResults`. In `instant` mode, the running phase is skipped.
 - `thinking` blocks: renders a single collapsed line `⏺ Thinking…` in dim style; expanded body is not shown.
+- `forceInstant` prop, when true, overrides `mode` and forces the rest of the playback to render instantly. Used by the `n` skip key in App without flipping the global mode.
 - Calls `onComplete()` once all blocks have finished rendering.
 - Rejects: N/A.
 - Errors: N/A.
@@ -215,13 +216,15 @@ type ParsedSession = { sessionId: string; cwd: string; turns: Turn[] }
 - `<App session={ParsedSession} />`
 
 **Behavior:**
-- `PromptBox`: bordered box at bottom, shows `cwd` in the gutter and the prompt text inside. When `typing === true`, characters appear progressively.
-- `App` holds state `{ turnIndex, mode: 'stream'|'instant', phase: 'idle'|'playing'|'done' }`.
-- On `Enter` (phase=idle, turnIndex < turns.length-1): start playback of `turns[turnIndex+1]`, set `phase='playing'`. When `<Turn onComplete>` fires, set `phase='idle'` and increment `turnIndex`.
-- On `Enter` (phase=idle, turnIndex === turns.length-1): set `phase='done'`. Next `Enter` exits.
-- On `f` (any phase): toggle `mode`.
-- On `q` or `Ctrl-C`: `process.exit(0)`.
-- Renders all completed turns above + the active `<Turn>` if playing + `<PromptBox>` at the bottom.
+- `PromptBox`: bordered box at bottom, shows `cwd` and a phase-aware hint in the gutter and the prompt text inside.
+- `App` holds state `{ turnIndex, mode: 'stream'|'instant', phase: 'idle'|'typing'|'playing'|'done', typedChars, skipCurrent }`.
+- On `Enter` (phase=idle, more turns remaining): set `phase='typing'`, `typedChars=0`, increment `turnIndex`. The typing effect streams the prompt character-by-character into PromptBox at ~6ms/char in `stream` mode, instant otherwise. When typing finishes, `phase='playing'`.
+- On `Enter` (phase=idle, last turn already played): set `phase='done'`. Next `Enter` exits.
+- On `f` (any phase): toggle `mode`. Affects both prompt typing and turn playback (mode is read via a ref so the change takes effect mid-stream).
+- On `n` (phase=typing or playing): set `skipCurrent=true`. Forces the rest of the current turn (prompt typing or assistant blocks) to render instantly. Resets to `false` when the turn completes or the next turn starts.
+- On `q` or `Ctrl-C`: `exit()`.
+- Renders all completed turns above + the active `<Turn>` if playing (with `forceInstant={skipCurrent}`) + `<PromptBox>` at the bottom.
+- `PromptBox.hint` is phase-aware: `↵ next turn (i+1/N)   f speed   q quit` (idle), `▸ playing turn i/N   f speed   n skip` (playing), `✓ done   ↵ quit` (done), etc. Without this the presenter can't distinguish slow streaming from an idle wait.
 - `cli.tsx` is updated to call `parseSession()` and pass result to `<App/>`. Errors from `parseSession` print to stderr and exit 1.
 - Rejects: N/A.
 - Errors: invalid JSONL surfaces from `parseSession`.

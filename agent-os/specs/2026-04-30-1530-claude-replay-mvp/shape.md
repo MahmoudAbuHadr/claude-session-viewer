@@ -10,6 +10,9 @@ A Node + Ink + TypeScript CLI named `claude-replay` that reads a finished Claude
 - **Per-user-turn advance.** Enter advances one user turn at a time; assistant text, tool calls, and tool results inside a turn all play automatically.
 - **Verbatim playback.** No pre-edit / curation flow. Point at a JSONL and play it. Curation is out of scope.
 - **Runtime speed toggle.** A single hotkey (`f`) flips between accelerated character streaming and instant rendering. Lets the presenter slow down for the punchline turn and breeze through boilerplate.
+- **Skip current turn (`n`).** Forces the rest of the active turn to render instantly without changing the global speed mode. Catches the case where streaming is acceptably slow most of the time but a particular turn has too much output for the demo's pace.
+- **Chunked text streaming.** Text reveals in chunks of 3 chars every ~10ms (~300 chars/sec). Per-character `setState` was a measurable bottleneck on ~900-char blocks; chunking cut React work by 3× and ships a noticeably more "alive" feel.
+- **Phase-aware status hint.** The bottom hint changes between `idle` / `typing` / `playing` / `done` so the presenter can tell at a glance whether to wait on playback or press Enter. Without this, a slow-streaming turn is indistinguishable from an idle waiting turn.
 - **No persistence.** No saved cursor, no resume, no config file. A demo is a one-shot thing.
 - **Subagent panels and jump-back are Phase 2.** MVP renders the parent transcript's tool_result for `Task` calls and does not support jumping back to earlier turns.
 
