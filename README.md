@@ -6,19 +6,27 @@ Built for demos, where waiting on real model latency is the bottleneck.
 
 ## Install
 
-```sh
-npx claude-replay [session]
-```
-
-Or install globally:
+Not published to npm yet — build from source:
 
 ```sh
-npm install -g claude-replay
+git clone <this-repo>
+cd claude-session-viewer
+npm install
+npm run build
+npm link        # optional: exposes `claude-replay` on your PATH
 ```
 
 Requires Node 18+.
 
 ## Usage
+
+Run from source during development:
+
+```sh
+npm run dev -- ~/path/to/session.jsonl
+```
+
+Or, after `npm run build` (and optionally `npm link`):
 
 ```sh
 claude-replay                                 # picks from recent sessions in ~/.claude/projects/
@@ -53,7 +61,6 @@ The full design lives in [`docs/plans/2026-04-30-claude-replay-design.md`](docs/
 ## Develop
 
 ```sh
-npm install
 npm run dev -- ~/path/to/session.jsonl    # run from source
 npm run build                              # compile to dist/
 npm test                                   # vitest
