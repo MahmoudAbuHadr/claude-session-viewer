@@ -1,5 +1,7 @@
 # Claude Replay MVP — Shaping Notes
 
+> **⚠ Superseded in part by `agent-os/specs/2026-04-30-1645-two-enter-submit/`.** The original `typing` phase and per-turn single-Enter rhythm described below have been replaced by a two-Enter rhythm with a `composed` phase (Enter #1 = instant prompt fill, Enter #2 = submit). Read this MVP spec for historical context; read the 1645 spec for current behavior.
+
 ## Scope
 
 A Node + Ink + TypeScript CLI named `claude-replay` that reads a finished Claude Code session JSONL and replays it in a terminal as if it were happening live, advanced one user-turn at a time by pressing Enter. Lets the presenter demo Claude Code workflows at a watchable pace without waiting on real-time agent latency.
@@ -7,12 +9,12 @@ A Node + Ink + TypeScript CLI named `claude-replay` that reads a finished Claude
 ## Decisions
 
 - **Terminal-faithful TUI, not a web app or video.** Built on Ink (the same React-for-terminal library Claude Code uses) so the rendering is visually indistinguishable from a live session.
-- **Per-user-turn advance.** Enter advances one user turn at a time; assistant text, tool calls, and tool results inside a turn all play automatically.
+- **Per-user-turn advance.** Enter advances one user turn at a time; assistant text, tool calls, and tool results inside a turn all play automatically. *(Superseded by 1645-two-enter-submit: now two Enter presses per turn — Enter #1 composes, Enter #2 submits.)*
 - **Verbatim playback.** No pre-edit / curation flow. Point at a JSONL and play it. Curation is out of scope.
 - **Runtime speed toggle.** A single hotkey (`f`) flips between accelerated character streaming and instant rendering. Lets the presenter slow down for the punchline turn and breeze through boilerplate.
 - **Skip current turn (`n`).** Forces the rest of the active turn to render instantly without changing the global speed mode. Catches the case where streaming is acceptably slow most of the time but a particular turn has too much output for the demo's pace.
 - **Chunked text streaming.** Text reveals in chunks of 3 chars every ~10ms (~300 chars/sec). Per-character `setState` was a measurable bottleneck on ~900-char blocks; chunking cut React work by 3× and ships a noticeably more "alive" feel.
-- **Phase-aware status hint.** The bottom hint changes between `idle` / `typing` / `playing` / `done` so the presenter can tell at a glance whether to wait on playback or press Enter. Without this, a slow-streaming turn is indistinguishable from an idle waiting turn.
+- **Phase-aware status hint.** The bottom hint changes between `idle` / `typing` / `playing` / `done` so the presenter can tell at a glance whether to wait on playback or press Enter. Without this, a slow-streaming turn is indistinguishable from an idle waiting turn. *(Superseded by 1645-two-enter-submit: phase set is now `idle` / `composed` / `playing` / `done`; `typing` was removed.)*
 - **No persistence.** No saved cursor, no resume, no config file. A demo is a one-shot thing.
 - **Subagent panels and jump-back are Phase 2.** MVP renders the parent transcript's tool_result for `Task` calls and does not support jumping back to earlier turns.
 

@@ -209,22 +209,25 @@ type ParsedSession = { sessionId: string; cwd: string; turns: Turn[] }
 
 ### Task 9: PromptBox + App shell + keybindings
 
+> **⚠ Superseded by `agent-os/specs/2026-04-30-1645-two-enter-submit/`.** The state machine described below (`typing` phase with character-by-character animation) has been replaced by a `composed` phase with instant prompt fill and a two-Enter rhythm. See the 1645 spec for the current behavior.
+
 **Location:** `src/components/PromptBox.tsx`, `src/components/App.tsx`, `src/cli.tsx` (modify)
 
 **Signature:**
 - `<PromptBox text={string} typing={boolean} cwd={string} />`
 - `<App session={ParsedSession} />`
 
-**Behavior:**
+**Behavior (current — post-1645 supersedure):**
 - `PromptBox`: bordered box at bottom, shows `cwd` and a phase-aware hint in the gutter and the prompt text inside.
-- `App` holds state `{ turnIndex, mode: 'stream'|'instant', phase: 'idle'|'typing'|'playing'|'done', typedChars, skipCurrent }`.
-- On `Enter` (phase=idle, more turns remaining): set `phase='typing'`, `typedChars=0`, increment `turnIndex`. The typing effect streams the prompt character-by-character into PromptBox at ~6ms/char in `stream` mode, instant otherwise. When typing finishes, `phase='playing'`.
+- `App` holds state `{ turnIndex, mode: 'stream'|'instant', phase: 'idle'|'composed'|'playing'|'done', skipCurrent }`.
+- On `Enter` (phase=idle, more turns remaining): increment `turnIndex`, reset `skipCurrent`, set `phase='composed'`. PromptBox immediately shows the full `userPrompt` (no typing animation).
+- On `Enter` (phase=composed): set `phase='playing'`. PromptBox clears; the active `<Turn>` mounts and plays.
 - On `Enter` (phase=idle, last turn already played): set `phase='done'`. Next `Enter` exits.
-- On `f` (any phase): toggle `mode`. Affects both prompt typing and turn playback (mode is read via a ref so the change takes effect mid-stream).
-- On `n` (phase=typing or playing): set `skipCurrent=true`. Forces the rest of the current turn (prompt typing or assistant blocks) to render instantly. Resets to `false` when the turn completes or the next turn starts.
+- On `f` (any phase): toggle `mode`. Affects turn playback only (mode is read via a ref so the change takes effect mid-stream).
+- On `n` (phase=playing): set `skipCurrent=true`. Forces the rest of the current turn's assistant blocks to render instantly. Resets to `false` when the turn completes. No-op during `composed`.
 - On `q` or `Ctrl-C`: `exit()`.
 - Renders all completed turns above + the active `<Turn>` if playing (with `forceInstant={skipCurrent}`) + `<PromptBox>` at the bottom.
-- `PromptBox.hint` is phase-aware: `↵ next turn (i+1/N)   f speed   q quit` (idle), `▸ playing turn i/N   f speed   n skip` (playing), `✓ done   ↵ quit` (done), etc. Without this the presenter can't distinguish slow streaming from an idle wait.
+- `PromptBox.hint` is phase-aware: `↵ next turn (i+1/N)   f speed   q quit` (idle), `↵ submit   f speed   q quit` (composed), `▸ playing turn i/N   f speed   n skip` (playing), `✓ done   ↵ quit` (done).
 - `cli.tsx` is updated to call `parseSession()` and pass result to `<App/>`. Errors from `parseSession` print to stderr and exit 1.
 - Rejects: N/A.
 - Errors: invalid JSONL surfaces from `parseSession`.

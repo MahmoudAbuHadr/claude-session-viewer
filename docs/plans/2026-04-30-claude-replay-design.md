@@ -62,7 +62,7 @@ Subagent rendering is **out of scope for the MVP** and lives in Phase 2; the MVP
 
 Each event type maps to a specific Claude Code visual:
 
-- **User prompt** — Auto-typed into the bottom prompt box character-by-character, then "submitted" (box clears, message appears above as `> the prompt text` in dim color). This is the part that sells the illusion: the audience sees a prompt being typed but the presenter never pressed any keys.
+- **User prompt** — On Enter #1, the full prompt instantly appears in the bottom prompt box (no character-by-character typing). The replayer enters `composed` phase and waits. On Enter #2, the box clears and the prompt appears above as `> the prompt text` in dim color, then the assistant blocks begin streaming. The two-Enter rhythm sells the illusion better than a typing animation: the audience sees the prompt sit composed for a beat before the presenter "submits."
 - **Assistant `text` block** — Streamed top-down in the main pane. In streaming mode, characters appear in chunks of 3 every ~10ms (~300 chars/sec) with small jitter. The chunking matters: per-character React state updates were a noticeable bottleneck on long blocks (~900 chars), and 1-char-per-tick streaming felt deceptively slow on a TTY. In instant mode, the full block appears in one frame.
 - **Assistant `thinking` block** — Rendered inside a collapsed `⏺ Thinking…` line in dim style. Body is not shown.
 - **Assistant `tool_use` block** — A bordered tool-call panel: `⏺ ToolName(arg-summary)` header, spinner while "running", then the result inline (truncated to 30 lines with a `… +M lines` footer, like the real TUI). The "running" delay is faked: 150–400ms in streaming mode, ~0 in instant.
@@ -82,16 +82,19 @@ Each event type maps to a specific Claude Code visual:
 **State machine** — the replayer is in exactly one of these states:
 
 - `idle` — between turns, waiting for input. Hint shown: `↵ next turn`.
-- `playing` — running events from the current turn. Most keys are buffered until the turn finishes, except the speed toggle.
+- `composed` — Enter #1 has been pressed; the prompt is fully visible in the bottom PromptBox, waiting for Enter #2 to submit. Models the natural beat between *finishing a thought* and *submitting it* in real Claude Code use.
+- `playing` — running events from the current turn. Most keys are buffered until the turn finishes, except the speed toggle and `n` skip.
 - `done` — past the last turn. Enter quits.
+
+The flow per turn is `idle → (Enter #1) → composed → (Enter #2) → playing → idle → ...`. Two Enter presses per turn, not one. The `composed` phase shows the prompt instantly (no character-by-character animation) so the suspense lives in the pause before submit, not in a typing effect.
 
 **Keybindings (MVP):**
 
 | Key | Action |
 |---|---|
-| `Enter` | (idle) play next turn / (done) quit |
+| `Enter` | (idle) compose next prompt / (composed) submit / (done) quit |
 | `f` | toggle stream ↔ instant playback speed |
-| `n` | (typing/playing) skip to end of current turn — renders the rest of this turn instantly without changing the global speed mode |
+| `n` | (playing) skip to end of current turn — renders the rest of this turn instantly without changing the global speed mode. No-op during `composed` (nothing to skip). |
 | `q` / `Ctrl-C` | quit |
 
 **Phase 2 keybindings:**
@@ -102,18 +105,18 @@ Each event type maps to a specific Claude Code visual:
 | `b` | jump back one turn |
 | `g` | go-to-turn prompt (`> 7`) |
 
-**Status-line hint (visible at the bottom under the prompt box):** the hint must be phase-aware so the presenter can distinguish "still streaming, just be patient" from "ready, press Enter for next turn". MVP wording:
+**Status-line hint (visible at the bottom under the prompt box):** the hint must be phase-aware so the presenter can distinguish "still streaming, just be patient" from "ready, press Enter for next turn" from "ready, press Enter to submit." MVP wording:
 
 | Phase | Hint |
 |---|---|
 | idle (before first turn) | `↵ play turn 1/N   f → instant   q quit` |
 | idle (mid-session) | `↵ next turn (i+1/N)   f → instant   q quit` |
 | idle (last turn finished) | `✓ end of session   ↵ quit   f → instant` |
-| typing | `▸ typing turn i/N   f → instant   n skip` |
+| composed | `↵ submit   f → instant   q quit` |
 | playing | `▸ playing turn i/N   f → instant   n skip` |
 | done | `✓ done   ↵ quit` |
 
-Without this, a slow-streaming turn looks identical to an idle one and the presenter can't tell whether to wait or press Enter.
+Without this, a slow-streaming turn looks identical to an idle one and the presenter can't tell whether to wait or press Enter — and worse, can't tell which Enter (compose vs submit) is next.
 
 **Why a back/jump-to feature on a "just press Enter" tool:** during demos people ask "wait, can you show that bit again?" Without `b`/`g` you would have to restart the whole session. These are escape hatches, not the main flow — Phase 2 only.
 
