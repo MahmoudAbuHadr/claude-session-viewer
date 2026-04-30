@@ -95,6 +95,7 @@ The flow per turn is `idle → (Enter #1) → composed → (Enter #2) → playin
 | `Enter` | (idle) compose next prompt / (composed) submit / (done) quit |
 | `f` | toggle stream ↔ instant playback speed |
 | `n` | (playing) skip to end of current turn — renders the rest of this turn instantly without changing the global speed mode. No-op during `composed` (nothing to skip). |
+| `b` | (idle/composed/playing/done) rewind one turn — drops the most recently played turn from the transcript and returns to `idle`. No-op when no turn has been played yet. Press repeatedly to walk back further. |
 | `q` / `Ctrl-C` | quit |
 
 **Phase 2 keybindings:**
@@ -102,25 +103,24 @@ The flow per turn is `idle → (Enter #1) → composed → (Enter #2) → playin
 | Key | Action |
 |---|---|
 | `Space` | (playing) pause-resume |
-| `b` | jump back one turn |
 | `g` | go-to-turn prompt (`> 7`) |
 
-**Status-line hint (visible at the bottom under the prompt box):** the hint must be phase-aware so the presenter can distinguish "still streaming, just be patient" from "ready, press Enter for next turn" from "ready, press Enter to submit." MVP wording:
+**Status-line hint (visible at the bottom under the prompt box):** the hint must be phase-aware so the presenter can distinguish "still streaming, just be patient" from "ready, press Enter for next turn" from "ready, press Enter to submit." A `b ← prev` chip appears whenever a turn has been played (so the presenter knows the rewind is available). MVP wording:
 
 | Phase | Hint |
 |---|---|
 | idle (before first turn) | `↵ play turn 1/N   f → instant   q quit` |
-| idle (mid-session) | `↵ next turn (i+1/N)   f → instant   q quit` |
-| idle (last turn finished) | `✓ end of session   ↵ quit   f → instant` |
-| composed | `↵ submit   f → instant   q quit` |
-| playing | `▸ playing turn i/N   f → instant   n skip` |
-| done | `✓ done   ↵ quit` |
+| idle (mid-session) | `↵ next turn (i+1/N)   b ← prev   f → instant   q quit` |
+| idle (last turn finished) | `✓ end of session   ↵ quit   b ← prev   f → instant` |
+| composed | `↵ submit   b ← prev   f → instant   q quit` |
+| playing | `▸ playing turn i/N   b ← prev   f → instant   n skip` |
+| done | `✓ done   ↵ quit   b ← prev` |
 
 Without this, a slow-streaming turn looks identical to an idle one and the presenter can't tell whether to wait or press Enter — and worse, can't tell which Enter (compose vs submit) is next.
 
-**Why a back/jump-to feature on a "just press Enter" tool:** during demos people ask "wait, can you show that bit again?" Without `b`/`g` you would have to restart the whole session. These are escape hatches, not the main flow — Phase 2 only.
+**Why a back/jump-to feature on a "just press Enter" tool:** during demos people ask "wait, can you show that bit again?" Without `b` you would have to restart the whole session. `b` ships in the MVP; `g` (go-to-turn) is still deferred — see `docs/plans/2026-04-30-back-one-turn-design.md`.
 
-**Re-rendering for jump-back (Phase 2):** clear the screen and replay turns `0..target` instantly with rendering side-effects only (no spinner delays). The audience just sees the screen flash and the transcript reappear up to that point. Cheaper than maintaining a snapshot per turn.
+**How `b` rewinds without snapshots or screen flash:** every completed historical turn is already mounted in the React tree (rendered with `mode="instant"`). Decrementing `turnIndex` simply drops the most recent Turn from the rendered list; the rest stay mounted with their state intact. If a Turn is mid-streaming when `b` is pressed, its `useEffect` cleanup sets `cancelled = true`, the `run()` loop bails on its next iteration, and the partial content vanishes with the unmount. No snapshot table, no instant-replay loop. (The earlier "clear and replay 0..target" idea remains the right approach for `g`, when it ships.)
 
 **Persistence:** none. No saved cursor, no resume. A demo is a one-shot thing; saving state adds complexity for no gain.
 

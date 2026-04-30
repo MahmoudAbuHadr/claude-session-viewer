@@ -60,6 +60,13 @@ export const App: React.FC<AppProps> = ({session}) => {
 			setSkipCurrent(true);
 			return;
 		}
+		if (input === 'b') {
+			if (turnIndex < 0) return;
+			setTurnIndex(turnIndex - 1);
+			setPhase('idle');
+			setSkipCurrent(false);
+			return;
+		}
 		if (key.return) {
 			if (phase === 'idle') startNextTurn();
 			else if (phase === 'composed') submitComposed();
@@ -96,20 +103,21 @@ export const App: React.FC<AppProps> = ({session}) => {
 
 	const totalTurns = session.turns.length;
 	const speedHint = `f ${mode === 'stream' ? '→ instant' : '→ stream'}`;
+	const prevHint = turnIndex >= 0 ? '   b ← prev' : '';
 	const hint = ((): string => {
 		switch (phase) {
 			case 'idle':
 				if (turnIndex < 0)
 					return `↵ play turn 1/${totalTurns}   ${speedHint}   q quit`;
 				if (turnIndex + 1 < totalTurns)
-					return `↵ next turn (${turnIndex + 2}/${totalTurns})   ${speedHint}   q quit`;
-				return `✓ end of session   ↵ quit   ${speedHint}`;
+					return `↵ next turn (${turnIndex + 2}/${totalTurns})${prevHint}   ${speedHint}   q quit`;
+				return `✓ end of session   ↵ quit${prevHint}   ${speedHint}`;
 			case 'composed':
-				return `↵ submit   ${speedHint}   q quit`;
+				return `↵ submit${prevHint}   ${speedHint}   q quit`;
 			case 'playing':
-				return `▸ playing turn ${turnIndex + 1}/${totalTurns}   ${speedHint}   n skip`;
+				return `▸ playing turn ${turnIndex + 1}/${totalTurns}${prevHint}   ${speedHint}   n skip`;
 			case 'done':
-				return '✓ done   ↵ quit';
+				return `✓ done   ↵ quit${prevHint}`;
 		}
 	})();
 

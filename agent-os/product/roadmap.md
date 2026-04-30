@@ -13,5 +13,6 @@ The minimum demo-usable replayer.
 
 Polish and audience-friendly affordances, added once the MVP is stable.
 
-- **Jump-back / go-to-turn** — hotkeys to jump back one turn (`b`) or jump to a specific turn number (`g 7`). Useful when an audience member asks the presenter to revisit something.
+- **Back one turn (`b`)** — *shipped 2026-04-30.* Single keypress rewinds the visible transcript by one turn from any phase (idle/composed/playing/done). Pressing `b` repeatedly walks back further. Forward direction is the existing `Enter`. See `docs/plans/2026-04-30-back-one-turn-design.md`.
+- **Go-to-turn (`g`)** — still deferred. A `> 7` prompt that jumps to an absolute turn number. Subsumes multi-step `b b b…` for far jumps but needs an additional input phase, which `b` doesn't.
 - **Scroll history** — Up/Down arrow keys scroll the rendered transcript between turns so the presenter can refer back to earlier output mid-demo without restarting.

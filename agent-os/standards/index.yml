@@ -1,0 +1,9 @@
+typescript:
+  import-extensions:
+    description: Use `.js` on local imports (even for `.ts`/`.tsx` sources), `node:` prefix for built-ins
+  import-type:
+    description: Use `import type` for type-only imports; keep value and type imports separate
+  interface-vs-type:
+    description: When to use `interface` (object shapes) vs `type` (unions, aliases) in TypeScript
+  non-null-assertions:
+    description: Use `!` only after a check that proves the value exists; otherwise narrow with a guard
