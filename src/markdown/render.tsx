@@ -20,7 +20,7 @@ interface RenderedMarkdownProps {
 export function RenderedMarkdown({doc}: RenderedMarkdownProps): React.ReactElement | null {
 	if (doc.blocks.length === 0) return null;
 	return (
-		<Box flexDirection="column">
+		<Box flexDirection="column" gap={1}>
 			{doc.blocks.map((block, i) => (
 				<RenderedBlock key={i} block={block} />
 			))}
@@ -186,7 +186,7 @@ function BlockBlockquote({block}: BlockBlockquoteProps): React.ReactElement {
 					</Text>
 				))}
 			</Box>
-			<Box flexDirection="column">
+			<Box flexDirection="column" gap={1}>
 				{block.blocks.map((b, i) => (
 					<RenderedBlock key={i} block={b} />
 				))}
@@ -248,7 +248,7 @@ function BlockTable({block}: BlockTableProps): React.ReactElement {
 	};
 
 	const separator = (
-		<Text key="sep" color="gray" dimColor>
+		<Text key="sep" color="gray">
 			{widths.map((w, i) => (
 				<React.Fragment key={i}>
 					{'─'.repeat(w)}
