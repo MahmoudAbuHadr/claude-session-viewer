@@ -113,13 +113,13 @@ export const App: React.FC<AppProps> = ({session}) => {
 		}
 	})();
 
-	const promptText =
-		phase === 'composed' ? session.turns[turnIndex]!.userPrompt : '';
+	const promptForBox =
+		phase === 'composed' ? session.turns[turnIndex]!.prompt : null;
 
 	return (
 		<Box flexDirection="column">
 			{turnElements}
-			<PromptBox text={promptText} cwd={session.cwd} hint={hint} />
+			<PromptBox prompt={promptForBox} cwd={session.cwd} hint={hint} />
 		</Box>
 	);
 };

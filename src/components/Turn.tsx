@@ -121,10 +121,19 @@ export const Turn: React.FC<TurnProps> = ({
 
 	return (
 		<Box flexDirection="column" marginY={0}>
-			<Box>
-				<Text color="gray">{'> '}</Text>
-				<Text>{turn.userPrompt}</Text>
-			</Box>
+			{turn.prompt.display.length > 0 && (
+				<Box>
+					<Text color="gray">{'> '}</Text>
+					<Text color="gray">{turn.prompt.display}</Text>
+				</Box>
+			)}
+			{turn.prompt.stdout != null && (
+				<Box paddingLeft={2}>
+					<Text color="gray" dimColor>
+						{turn.prompt.stdout}
+					</Text>
+				</Box>
+			)}
 			{blocks.map((state, idx) => (
 				<RenderedBlock key={idx} state={state} turn={turn} />
 			))}
